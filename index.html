@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    body {
+        padding: 0;
+        margin: 0;
+        background: #90c2dd;
+        color: #fff;
+        font-size: 16px;
+        font-family: Arial, serif;
+    }
+
+    header {
+        width: 100%;
+        background: #fff;
+        color: #ef7c00;
+        font-size: 1.4rem;
+        height: 3rem;
+        padding: 1rem;
+    }
+
+    h1 {
+        margin: 0;
+        padding: 0;
+    }
+
+    .xaxis,
+    .yaxis {
+        stroke: #fff;
+        fill: #fff;
+    }
+
+    .graph-line {
+        stroke: #ef7c00;
+    }
+</style>
+<body>
+
+<header>
+    <h1>Sprint Feeling</h1>
+</header>
+
+<svg id="visualisation" width="1000" height="600"></svg>
+
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+
+    var request = new XMLHttpRequest();
+
+    request.open('GET', 'data.json', true);
+
+    request.onload = function () {
+        if (request.status >= 200 && request.status < 400) {
+
+            // got the data, processing..
+            var rawData = JSON.parse(request.response);
+            var convertedValues = [];
+
+            // convert to average per date and push to convertedValues
+            rawData.forEach(function (valueByDate) {
+                var totalValuesByDate = 0;
+
+                // extract the data
+                valueByDate['values'].forEach(function (givenValue) {
+                    totalValuesByDate += givenValue;
+                });
+
+                // construct a single entry
+                var dateValue = valueByDate['date'].replace(/-/g, ",");
+                var tempDate = new Date(dateValue);
+                var entry = {'date': tempDate, 'value': totalValuesByDate / valueByDate['values'].length};
+
+                // push the converted value
+                convertedValues.push(entry);
+
+            });
+
+            // draws line for data in given array
+            var lineGen = d3.svg.line()
+                .x(function (convertedValues) {
+                    return xScale(convertedValues.date);
+                })
+                .y(function (convertedValues) {
+                    return yScale(convertedValues.value);
+                });
+
+            // define the range
+            var mindate = new Date(2015, 5, 31);
+            var maxdate = new Date(2017, 2, 31);
+
+            // select the svg element to draw into and set some properties for dimensions and positions
+            var vis = d3.select("#visualisation"),
+                WIDTH = 1000,
+                HEIGHT = 500,
+                MARGINS = {
+                    top: 20,
+                    right: 20,
+                    bottom: 20,
+                    left: 50
+                },
+                xScale = d3.time.scale()
+                    .domain([mindate, maxdate])    // values between for month of january
+                    .range([95, 1000 - 100 * 2]);   // map these the the chart width = total width minus padding at both sides
+            yScale = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([1, 5]),
+                xAxis = d3.svg.axis()
+                    .scale(xScale),
+                yAxis = d3.svg.axis()
+                    .scale(yScale)
+                    .orient("left");
+
+
+            // append the x axis
+            vis.append("svg:g")
+                .attr("class", "xaxis")
+                .attr("transform", "translate(-50," + (HEIGHT - MARGINS.bottom) + ")")
+                .call(xAxis);
+
+            // append the y axis
+            vis.append("svg:g")
+                .attr("class", "yaxis")
+                .attr("transform", "translate(" + (MARGINS.left) + ",0)")
+                .call(yAxis);
+
+            // draw graph
+            vis.append('svg:path')
+                .attr("class", "graph-line")
+                .attr('d', lineGen(convertedValues))
+                .attr('stroke', 'green')
+                .attr('stroke-width', 3)
+                .attr('fill', 'none');
+
+            vis.selectAll(".xaxis text")  // select all the text elements for the xaxis
+                .attr("transform", function (d) {
+                    return "translate(" + this.getBBox().height * -2 + "," + this.getBBox().height + ")rotate(-45)";
+                });
+        } else {
+            console.log('could not load data, giving up');
+        }
+    };
+
+    request.send();
+
+</script>
+</body>
