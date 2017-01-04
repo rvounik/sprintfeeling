@@ -99,8 +99,8 @@
                     left: 50
                 },
                 xScale = d3.time.scale()
-                    .domain([mindate, maxdate])    // values between for month of january
-                    .range([95, 1000 - 100 * 2]);   // map these the the chart width = total width minus padding at both sides
+                    .domain([mindate, maxdate]) // values between for month of january
+                    .range([95, 1000 - 100 * 2]); // map these the the chart width = total width minus padding at both sides
             yScale = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([1, 5]),
                 xAxis = d3.svg.axis()
                     .scale(xScale),
